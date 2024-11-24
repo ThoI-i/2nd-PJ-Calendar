@@ -185,58 +185,52 @@
 
       #colorButtonContainer {
         position: absolute;
-        pointer-events: none; /* 클릭 이벤트 방지 */
+        pointer-events: none; /* 클릭 방지 */
       }
 
       .color-circle {
         position: absolute;
-        width: 50px;
-        height: 50px;
+        width: 40px; /* 원 크기 */
+        height: 40px;
         border-radius: 50%;
         background-color: transparent;
         opacity: 0;
-        transform: translate(0, 0);
-        transition: transform 0.4s ease, opacity 0.4s ease;
+        transform: translate(0, 0) scale(0); /* 초기 크기와 위치 */
+        transition: transform 0.5s ease, opacity 0.5s ease;
       }
 
       .color-circle.show {
         opacity: 1;
+        transform: translate(
+            calc(var(--distance) * cos(var(--angle))),
+            calc(var(--distance) * sin(var(--angle)))
+          )
+          scale(1); /* 원이 퍼질 때 크기 확대 */
+      }
+
+      .color-circle.hide {
+        transform: translate(0, 0) scale(0); /* 다시 버튼 중심으로 모임 */
       }
 
       .color-circle:nth-child(1) {
         --angle: 0deg; /* 00시 방향 */
-        --distance: 100px;
+        --distance: 80px;
       }
       .color-circle:nth-child(2) {
-        --angle: 15deg; /* 01시 방향 */
-        --distance: 100px;
+        --angle: 22.5deg; /* 01시 방향 */
+        --distance: 80px;
       }
       .color-circle:nth-child(3) {
-        --angle: 30deg; /* 02시 방향 */
-        --distance: 100px;
+        --angle: 45deg; /* 02시 방향 */
+        --distance: 80px;
       }
       .color-circle:nth-child(4) {
-        --angle: 45deg; /* 03시 방향 */
-        --distance: 100px;
+        --angle: 67.5deg; /* 03시 방향 */
+        --distance: 80px;
       }
       .color-circle:nth-child(5) {
-        --angle: 60deg; /* 04시 방향 */
-        --distance: 100px;
-      }
-      .color-circle:nth-child(6) {
-        --angle: 75deg; /* 05시 방향 */
-        --distance: 100px;
-      }
-      .color-circle:nth-child(7) {
-        --angle: 90deg; /* 06시 방향 */
-        --distance: 100px;
-      }
-
-      .color-circle.show {
-        transform: translate(
-          calc(var(--distance) * cos(var(--angle))),
-          calc(var(--distance) * sin(var(--angle)))
-        );
+        --angle: 90deg; /* 03시 방향 */
+        --distance: 80px;
       }
 
       .modal {
@@ -698,49 +692,57 @@
       document.addEventListener("DOMContentLoaded", () => {
         updateSlider(); // 슬라이더 초기화
         const colorButton = document.querySelector(".color-btn-corner");
-        const colorContainer = document.getElementById("colorButtonContainer");
+  const colorContainer = document.getElementById("colorButtonContainer");
 
-        const colors = [
-          "#ff7fbf",
-          "#c9366e",
-          "#007bff",
-          "#36c991",
-          "#a46ac8",
-          "#ffd700",
-          "#00ffff",
-        ];
+  const colors = ["#ff7fbf", "#c9366e", "#007bff", "#36c991", "#a46ac8"];
 
-        function createColorCircles(button) {
-          const rect = button.getBoundingClientRect(); // 버튼 위치 계산
-          const centerX = window.scrollX;
-          const centerY = window.scrollY + 900;
+  // 색상 원 생성 함수
+  function createColorCircles(button) {
+    const rect = button.getBoundingClientRect(); // 버튼 위치 계산
+    const centerX = rect.left ; // 버튼 중심 X
+    const centerY = rect.top ; // 버튼 중심 Y
 
-          colorContainer.innerHTML = ""; // 기존 색상 버튼 초기화
+    // 기존 원 초기화
+    colorContainer.innerHTML = "";
 
-          colors.forEach((color, index) => {
-            const colorCircle = document.createElement("div");
-            colorCircle.className = "color-circle";
-            colorCircle.style.backgroundColor = color;
-            colorCircle.style.setProperty("--angle", `${index * 15}deg`); // 각도 동적 설정
-            colorCircle.style.left = `${centerX}px`;
-            colorCircle.style.top = `${centerY}px`;
-            colorContainer.appendChild(colorCircle);
-          });
-        }
+    colors.forEach((color, index) => {
+      const colorCircle = document.createElement("div");
+      colorCircle.className = "color-circle";
+      colorCircle.style.backgroundColor = color;
 
-        // 버튼 위에 마우스 진입
-        colorButton.addEventListener("mouseenter", () => {
-          createColorCircles(colorButton);
-          const circles = colorContainer.querySelectorAll(".color-circle");
-          circles.forEach((circle) => circle.classList.add("show")); // 애니메이션 시작
-        });
+      // 버튼 중심 위치
+      colorCircle.style.left = `${centerX}px`;
+      colorCircle.style.top = `${centerY}px`;
 
-        // 버튼 위에서 마우스 벗어남
-        colorButton.addEventListener("mouseleave", () => {
-          const circles = colorContainer.querySelectorAll(".color-circle");
-          circles.forEach((circle) => circle.classList.remove("show")); // 애니메이션 초기화
-        });
+      colorContainer.appendChild(colorCircle);
+    });
+  }
+
+  // 버튼 위에 마우스 진입
+  colorButton.addEventListener("mouseenter", () => {
+    createColorCircles(colorButton);
+    const circles = colorContainer.querySelectorAll(".color-circle");
+    circles.forEach((circle) => {
+      // 퍼지는 효과
+      circle.classList.add("show");
+    });
+  });
+
+  // 버튼 위에서 마우스 벗어남
+  colorButton.addEventListener("mouseleave", () => {
+    const circles = colorContainer.querySelectorAll(".color-circle");
+    circles.forEach((circle) => {
+      // 모이는 효과
+      circle.classList.remove("show");
+      circle.classList.add("hide");
+
+      // 애니메이션 후 제거
+      circle.addEventListener("transitionend", () => {
+        circle.remove();
       });
+    });
+  });
+});
       //닫기 버튼 클릭
       closeBtn.addEventListener("click", () => {
         modal.style.display = "none";
